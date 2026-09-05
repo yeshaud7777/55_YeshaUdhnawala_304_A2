@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+    <title>Dashboard</title>
+
+    <style>
+
+        body {
+            font-family: Arial;
+            padding: 30px;
+            background: #f4f4f4;
+        }
+
+        .post {
+            background: white;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+        }
+
+        button {
+            padding: 8px 15px;
+            margin-right: 5px;
+            cursor: pointer;
+        }
+
+        img {
+            max-width: 200px;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<h1>My Blog Dashboard</h1>
+
+<div id="posts"></div>
+
+<script>
+
+async function loadPosts() {
+
+    const token =
+        localStorage.getItem("token");
+
+    if (!token) {
+
+        window.location.href =
+            "/login";
+
+        return;
+    }
+
+    const response =
+        await fetch(
+            "/api/posts",
+            {
+                headers: {
+                    Authorization:
+                        "Bearer " + token
+                }
+            }
+        );
+
+    if (!response.ok) {
+
+        localStorage.removeItem("token");
+
+        window.location.href =
+            "/login";
+
+        return;
+    }
+
+    const data =
+        await response.json();
+
+    const container =
+        document.getElementById("posts");
+
+    if (data.data.length === 0) {
+
+        container.innerHTML =
+            "<p>No posts found.</p>";
+
+        return;
+    }
+
+    container.innerHTML =
+        data.data.map(post => {
+
+            return `
+
+                <div class="post">
+
+                    <h2>${post.title}</h2>
+
+                    ${
+                        post.image
+                        ?
+                        `<img src="${post.image}">`
+                        :
+                        ""
+                    }
+
+                    <p>
+                        ${post.content}
+                    </p>
+
+                    <p>
+                        Tags:
+                        ${post.tags.join(", ")}
+                    </p>
+
+                    <button
+                        onclick="deletePost('${post._id}')"
+                    >
+                        Delete
+                    </button>
+
+                </div>
+
+            `;
+
+        }).join("");
+
+}
+
+
+async function deletePost(id) {
+
+    const token =
+        localStorage.getItem("token");
+
+    const response =
+        await fetch(
+            "/api/posts/" + id,
+            {
+                method: "DELETE",
+
+                headers: {
+                    Authorization:
+                        "Bearer " + token
+                }
+            }
+        );
+
+    const data =
+        await response.json();
+
+    alert(data.message);
+
+    loadPosts();
+}
+
+
+loadPosts();
+
+</script>
+
+</body>
+
+</html>
